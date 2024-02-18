@@ -1,0 +1,55 @@
+bin
+obj# .NET Core and .NET SDK
+*.dll
+*.exe
+*.pdb
+*.suo
+*.cache
+*.log
+*.vscode
+project.lock.json
+project.fragment.lock.json
+bin/
+obj/
+.idea/
+*.user
+*.sln.docstates
+
+# Visual Studio files
+.vs/
+*.vspscc
+*_i.c
+*_p.c
+*.ncb
+*.suo
+*.tlb
+*.tlh
+*.bak
+*.cache
+*.ilk
+*.log
+*.lib
+*.sbr
+*.sdf
+*.idb
+*.mdf
+*.ldf
+*/[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+bld/
+[Bb]in/
+[Ll]og/
+
+# Rider
+.idea/
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Ignore appsettings.json files
+appsettings.Development.json
+
