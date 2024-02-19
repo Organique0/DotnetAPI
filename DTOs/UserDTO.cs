@@ -1,15 +1,15 @@
-namespace DotnetAPI.Models
+namespace DotnetAPI.Dtos
 {
-    public partial class User
+    //Object used to transfer data from one place to another
+    public partial class UserToAddDTO
     {
-        public int UserId { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string Email { get; set; }
         public string Gender { get; set; }
         public bool Active { get; set; }
 
-        public User()
+        public UserToAddDTO()
         {
             FirstName ??= "";
             LastName ??= "";
