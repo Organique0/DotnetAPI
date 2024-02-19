@@ -1,3 +1,4 @@
+using System.Reflection.Metadata.Ecma335;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DotnetAPI.Controllers;
@@ -48,13 +49,86 @@ public class UserController : ControllerBase
             [Gender],
             [Active]
         FROM TutorialAppSchema.Users
-        WHERE UserId = " + userId.ToString() + ";";
+        WHERE UserId = @UserId";
 
-        User user = _dapper.LoadDataSingle<User>(sql);
+        var parameters = new
+        {
+            UserId = userId
+        };
+
+        User user = _dapper.LoadDataSingle<User>(sql, parameters);
         return user;
     }
 
+    [HttpPut("EditUser")]
+    //IActionResult -> a response to tell you what happened (success, fail...)
+    public IActionResult EditUser(User user)
+    {
+        string sql = @"
+        UPDATE TutorialAppSchema.Users 
+        SET [FirstName] = @FirstName,
+            [LastName] = @LastName,
+            [Email] = @Email,
+            [Gender] = @Gender,
+            [Active] = @Active
+        WHERE UserId = @UserId";
 
+        var parameters = new
+        {
+            user.FirstName,
+            user.LastName,
+            user.Email,
+            user.Gender,
+            user.Active,
+            user.UserId
+        };
+
+        if (_dapper.ExecuteSql(sql, parameters))
+        {
+            return Ok();
+        }
+
+        throw new Exception("Failed to update user");
+    }
+
+    [HttpPost("AddUser")]
+    public IActionResult AddUser(User user)
+    {
+        string sql = @"
+             INSERT INTO TutorialAppSchema.Users
+                (
+                [FirstName],
+                [LastName],
+                [Email],
+                [Gender],
+                [Active]
+                )
+            VALUES
+            (
+               @FirstName,
+               @LastName,
+               @Email,
+               @Gender,
+               @Active 
+            );
+        ";
+
+        var parameters = new
+        {
+            user.FirstName,
+            user.LastName,
+            user.Email,
+            user.Gender,
+            user.Active
+        };
+
+        if (_dapper.ExecuteSql(sql, parameters))
+        {
+            return Ok();
+        }
+
+        throw new Exception("Failed to add user");
+    }
 
 }
 

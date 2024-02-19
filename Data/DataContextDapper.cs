@@ -12,27 +12,28 @@ namespace DotnetAPI
             _config = configuration;
         }
 
-        public IEnumerable<T> LoadData<T>(string sql)
+        public IEnumerable<T> LoadData<T>(string sql, object? param = null)
         {
-            IDbConnection dbConnection = new SqlConnection(_config.GetConnectionString("DefaultConnection"));
-            return dbConnection.Query<T>(sql);
+            using IDbConnection dbConnection = new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+            return dbConnection.Query<T>(sql, param);
         }
 
-        public T LoadDataSingle<T>(string sql)
+        public T LoadDataSingle<T>(string sql, object? param = null)
         {
-            IDbConnection dbConnection = new SqlConnection(_config.GetConnectionString("DefaultConnection"));
-            return dbConnection.QuerySingle<T>(sql);
+            using IDbConnection dbConnection = new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+            return dbConnection.QuerySingle<T>(sql, param);
         }
 
-        public bool ExecuteSql(string sql)
+        public bool ExecuteSql(string sql, object? param = null)
         {
-            IDbConnection dbConnection = new SqlConnection(_config.GetConnectionString("DefaultConnection"));
-            return dbConnection.Execute(sql) > 0;
+            using IDbConnection dbConnection = new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+            return dbConnection.Execute(sql, param) > 0;
         }
-        public int ExecuteSqlWithRowCount(string sql)
+
+        public int ExecuteSqlWithRowCount(string sql, object? param = null)
         {
-            IDbConnection dbConnection = new SqlConnection(_config.GetConnectionString("DefaultConnection"));
-            return dbConnection.Execute(sql);
+            using IDbConnection dbConnection = new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+            return dbConnection.Execute(sql, param);
         }
     }
 }
