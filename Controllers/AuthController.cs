@@ -18,7 +18,7 @@ namespace DotnetAPI.Controllers
     //require authentication
     [Authorize]
     [ApiController]
-    [Route("Controller")]
+    [Route("[Controller]")]
     public class AuthController : ControllerBase
     {
         private readonly DataContextDapper _dapper;
