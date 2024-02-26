@@ -74,7 +74,7 @@ public class UserCompleteController : ControllerBase
     [HttpDelete("DeleteUser/{userId}")]
     public IActionResult DeleteUser(int userId)
     {
-        string sql = "EXEC TutorialAppSchema.spUser_Delete @userId";
+        string sql = "EXEC TutorialAppSchema.spUser_Delete @UserId";
 
         var parameters = new
         {
