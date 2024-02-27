@@ -62,27 +62,23 @@ namespace DotnetAPI.Controllers
                     byte[] passwordHash = _authHelper.GetPasswordHash(userForRegistration.Password, passwordSalt);
 
                     //inserting new value in auth table
-                    string sqlAddAuth = @"INSERT INTO TutorialAppSchema.Auth(
-                        [Email],
-                        [PasswordHash],
-                        [PasswordSalt]
-                    ) VALUES (
-                        @Email,
-                        @PasswordHash,
-                        @PasswordSalt
-                    )";
+                    string sqlAddAuth = @"EXEC TutorialAppSchema.spRegistration_Upsert
+                        @Email = @EmailParam,
+                        @PasswordHash = @PasswordHashParam,
+                        @PasswordSalt = @PasswordSaltParam
+                    ";
 
                     List<SqlParameter> sqlParameters = [];
 
-                    SqlParameter passwordHashParam = new("@PasswordHash", SqlDbType.VarBinary)
+                    SqlParameter passwordHashParam = new("@PasswordHashParam", SqlDbType.VarBinary)
                     {
                         Value = passwordHash
                     };
-                    SqlParameter passwordSaltParam = new("@PasswordSalt", SqlDbType.VarBinary)
+                    SqlParameter passwordSaltParam = new("@PasswordSaltParam", SqlDbType.VarBinary)
                     {
                         Value = passwordSalt
                     };
-                    SqlParameter email = new("@Email", SqlDbType.NVarChar)
+                    SqlParameter email = new("@EmailParam", SqlDbType.NVarChar)
                     {
                         Value = userForRegistration.Email
                     };
@@ -94,22 +90,16 @@ namespace DotnetAPI.Controllers
                     if (_dapper.ExecuteSqlWithParameters(sqlAddAuth, sqlParameters))
                     {
                         string UserToAddSql = @"
-                            INSERT INTO TutorialAppSchema.Users
-                                (
-                                [FirstName],
-                                [LastName],
-                                [Email],
-                                [Gender],
-                                [Active]
-                                )
-                            VALUES
-                            (
-                            @FirstName,
-                            @LastName,
-                            @Email,
-                            @Gender,
-                            1
-                            );";
+                            EXEC TutorialAppSchema.spUser_Upsert
+                                @FirstName,
+                                @LastName,
+                                @Email,
+                                @Gender,
+                                @JobTitle,
+                                @Department,
+                                @Salary,
+                                @Active
+                        ";
 
                         var UserToAddParameters = new
                         {
@@ -117,11 +107,21 @@ namespace DotnetAPI.Controllers
                             userForRegistration.LastName,
                             userForRegistration.Email,
                             userForRegistration.Gender,
+                            userForRegistration.JobTitle,
+                            userForRegistration.Department,
+                            userForRegistration.Salary,
+                            Active = 1
                         };
 
-                        if (_dapper.ExecuteSql(UserToAddSql, UserToAddParameters))
+
+                        try
                         {
+                            _dapper.ExecuteSql(UserToAddSql, UserToAddParameters);
                             return Ok();
+                        }
+                        catch (Exception e)
+                        {
+                            throw new Exception(e.Message);
                         }
 
                         throw new Exception("Failed to add user");

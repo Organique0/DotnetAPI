@@ -51,7 +51,7 @@ public class UserCompleteController : ControllerBase
             @Active,
             @JobTitle,
             @Department,
-            @Salry,
+            @Salary,
             @UserId
             ";
 
@@ -62,7 +62,10 @@ public class UserCompleteController : ControllerBase
             user.Email,
             user.Gender,
             user.Active,
-            user.UserId
+            user.UserId,
+            user.Salary,
+            user.JobTitle,
+            user.Department
         };
 
         if (_dapper.ExecuteSql(sql, parameters))
