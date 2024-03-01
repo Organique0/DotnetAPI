@@ -4,6 +4,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using Dapper;
 using DotnetAPI.Data;
 using DotnetAPI.Dtos;
 using DotnetAPI.Helpers;
@@ -52,42 +53,12 @@ namespace DotnetAPI.Controllers
 
                 if (!existingUsers.Any())
                 {
-                    //some complex password stuff
-                    byte[] passwordSalt = new byte[128 / 8];
-                    using (RandomNumberGenerator r = RandomNumberGenerator.Create())
+                    UserForLoginDTO userForSetPass = new()
                     {
-                        r.GetNonZeroBytes(passwordSalt);
-                    }
-
-                    byte[] passwordHash = _authHelper.GetPasswordHash(userForRegistration.Password, passwordSalt);
-
-                    //inserting new value in auth table
-                    string sqlAddAuth = @"EXEC TutorialAppSchema.spRegistration_Upsert
-                        @Email = @EmailParam,
-                        @PasswordHash = @PasswordHashParam,
-                        @PasswordSalt = @PasswordSaltParam
-                    ";
-
-                    List<SqlParameter> sqlParameters = [];
-
-                    SqlParameter passwordHashParam = new("@PasswordHashParam", SqlDbType.VarBinary)
-                    {
-                        Value = passwordHash
+                        Email = userForRegistration.Email,
+                        Password = userForRegistration.Password
                     };
-                    SqlParameter passwordSaltParam = new("@PasswordSaltParam", SqlDbType.VarBinary)
-                    {
-                        Value = passwordSalt
-                    };
-                    SqlParameter email = new("@EmailParam", SqlDbType.NVarChar)
-                    {
-                        Value = userForRegistration.Email
-                    };
-
-                    sqlParameters.Add(passwordSaltParam);
-                    sqlParameters.Add(passwordHashParam);
-                    sqlParameters.Add(email);
-
-                    if (_dapper.ExecuteSqlWithParameters(sqlAddAuth, sqlParameters))
+                    if (_authHelper.SetPassword(userForSetPass))
                     {
                         string UserToAddSql = @"
                             EXEC TutorialAppSchema.spUser_Upsert
@@ -135,23 +106,32 @@ namespace DotnetAPI.Controllers
 
         }
 
+        [HttpPut("ResetPassword")]
+        public IActionResult ResetPassword(UserForLoginDTO userForSetPass)
+        {
+            if (_authHelper.SetPassword(userForSetPass))
+            {
+                return Ok();
+            }
+
+            throw new Exception("Failed to update password");
+        }
+
+
         [AllowAnonymous]
         [HttpPost("Login")]
         public IActionResult Login(UserForLoginDTO userForLogin)
         {
             try
             {
-                string sqlForHashAndSalt = @"
-                SELECT [PasswordHash], [PasswordSalt] from TutorialAppSchema.Auth 
-                WHERE Email = @Email;  
-                ";
+                string sqlForHashAndSalt = "EXEC TutorialAppSchema.sp_LoginConfirmation_Get @Email";
 
-                var parameters = new
-                {
-                    userForLogin.Email
-                };
+                //Use dynamic parameters instead. Just because.
+                DynamicParameters sqlParameters = new();
+                sqlParameters.Add("@Email", userForLogin.Email, DbType.String);
+
                 UserForLoginConfirmationDto userAuthRow = _dapper
-                .LoadDataSingle<UserForLoginConfirmationDto>(sqlForHashAndSalt, parameters);
+                .LoadDataSingleDynamic<UserForLoginConfirmationDto>(sqlForHashAndSalt, sqlParameters);
 
                 byte[] passwordHash = _authHelper.GetPasswordHash(userForLogin.Password, userAuthRow.PasswordSalt);
 
@@ -163,17 +143,13 @@ namespace DotnetAPI.Controllers
                     }
                 }
 
-                string userIdSql = @"
-                    SELECT UserId FROM TutorialAppSchema.Users
-                    WHERE Email = @Email
-                ";
+                string userIdSql = "EXEC TutorialAppSchema.sp_UserId_Get @UserId, @Email";
 
-                var userIdSqlParameters = new
-                {
-                    userForLogin.Email
-                };
+                DynamicParameters UserIdSqlParameters = new();
+                UserIdSqlParameters.Add("@Email", userForLogin.Email, DbType.String);
+                UserIdSqlParameters.Add("@UserId", null, DbType.Int32);
 
-                int userId = _dapper.LoadDataSingle<int>(userIdSql, userIdSqlParameters);
+                int userId = _dapper.LoadDataSingleDynamic<int>(userIdSql, UserIdSqlParameters);
 
                 return Ok(new Dictionary<string, string>
                 {
@@ -190,14 +166,11 @@ namespace DotnetAPI.Controllers
         [HttpGet("RefreshToken")]
         public string RefreshToken()
         {
-            string userIdSql = @"
-                    SELECT UserId FROM TutorialAppSchema.Users
-                    WHERE UserId = @UserId
-                ";
+            string userIdSql = "EXEC TutorialAppSchema.sp_UserId_Get @UserId, @Email=null";
 
             var userIdSqlParameters = new
             {
-                UserId = User.FindFirst("userId")?.Value
+                UserId = Convert.ToInt32(User.FindFirst("userId")?.Value)
             };
 
             int userId = _dapper.LoadDataSingle<int>(userIdSql, userIdSqlParameters);
