@@ -42,6 +42,36 @@ namespace DotnetAPI.Data
             return dbConnection.QuerySingle<T>(sql, param);
         }
         /// <summary>
+        /// Executes a query, returning the data typed as T.
+        /// </summary>
+        /// <param name="sql">Raw sql query</param>
+        /// <param name="param">List of DynamicParameters</param>
+        /// <returns>
+        /// A sequence of data of the supplied type; if a basic type (int, string, etc) is 
+        /// queried then the data from the first column is assumed, otherwise an instance is created per row, 
+        /// and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public IEnumerable<T> LoadDataDynamic<T>(string sql, DynamicParameters param)
+        {
+            using IDbConnection dbConnection = new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+            return dbConnection.Query<T>(sql, param);
+        }
+        /// <summary>
+        /// Executes a single-row query, returning the data typed as T. 
+        /// </summary>
+        /// <param name="sql">Raw sql query</param>
+        /// <param name="param">List of DynamicParameters</param>
+        /// <returns>
+        /// A sequence of data of the supplied type; if a basic type (int, string, etc) 
+        /// is queried then the data from the first column is assumed, otherwise an instance
+        /// is created per row, and a direct column-name===member-name mapping is assumed (case insensitive).
+        /// </returns>
+        public T LoadDataSingleDynamic<T>(string sql, DynamicParameters param)
+        {
+            using IDbConnection dbConnection = new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+            return dbConnection.QuerySingle<T>(sql, param);
+        }
+        /// <summary>
         /// Execute parameterized SQL.
         /// </summary>
         /// <param name="sql">Raw sql query</param>
@@ -77,6 +107,7 @@ namespace DotnetAPI.Data
         /// </returns>
         public bool ExecuteSqlWithParameters(string sql, List<SqlParameter> sqlParams)
         {
+            //usage example in: SetPassword()
             SqlCommand commandWithParams = new(sql);
 
             foreach (SqlParameter parameter in sqlParams)
@@ -93,6 +124,19 @@ namespace DotnetAPI.Data
             dbConnection.Close();
 
             return rowsAffected > 0;
+        }
+        /// <summary>
+        /// Execute SQL with DynamicParameters included
+        /// </summary>
+        /// <param name="sql">Raw sql query</param>
+        /// <param name="sqlParams">An instance of DynamicParameters</param>
+        /// <returns>
+        ///  Returns True of the number of rows affected is greater that 0
+        /// </returns>
+        public bool ExecuteSqlWithDynamicParameters(string sql, DynamicParameters sqlParams)
+        {
+            using IDbConnection dbConnection = new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+            return dbConnection.Execute(sql, sqlParams) > 0;
         }
 
     }

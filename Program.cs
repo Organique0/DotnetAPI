@@ -28,7 +28,6 @@ builder.Services.AddCors((options) =>
         .AllowCredentials();
     });
 });
-builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 string? tokenKeyString = builder.Configuration.GetSection("AppSettings:TokenKey").Value;
 
