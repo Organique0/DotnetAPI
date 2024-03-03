@@ -4,10 +4,12 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using AutoMapper;
 using Dapper;
 using DotnetAPI.Data;
 using DotnetAPI.Dtos;
 using DotnetAPI.Helpers;
+using DotnetAPI.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Mvc;
@@ -25,12 +27,19 @@ namespace DotnetAPI.Controllers
         private readonly DataContextDapper _dapper;
         private readonly ILogger _logger;
         private readonly AuthHelper _authHelper;
+        private readonly ReusableSql _reusableSql;
+        private readonly IMapper _mapper;
 
         public AuthController(IConfiguration configuration, ILogger<AuthController> logger)
         {
             _dapper = new DataContextDapper(configuration);
             _logger = logger;
             _authHelper = new AuthHelper(configuration);
+            _reusableSql = new ReusableSql(configuration);
+            _mapper = new Mapper(new MapperConfiguration(config =>
+            {
+                config.CreateMap<UserForRegistrationDTO, UserComplete>();
+            }));
         }
 
         //allow non-authorized access to this endpoint
@@ -60,42 +69,13 @@ namespace DotnetAPI.Controllers
                     };
                     if (_authHelper.SetPassword(userForSetPass))
                     {
-                        string UserToAddSql = @"
-                            EXEC TutorialAppSchema.spUser_Upsert
-                                @FirstName,
-                                @LastName,
-                                @Email,
-                                @Gender,
-                                @JobTitle,
-                                @Department,
-                                @Salary,
-                                @Active
-                        ";
+                        UserComplete userComplete = _mapper.Map<UserComplete>(userForRegistration);
+                        userComplete.Active = true;
 
-                        var UserToAddParameters = new
+                        if (_reusableSql.UpsertUser(userComplete))
                         {
-                            userForRegistration.FirstName,
-                            userForRegistration.LastName,
-                            userForRegistration.Email,
-                            userForRegistration.Gender,
-                            userForRegistration.JobTitle,
-                            userForRegistration.Department,
-                            userForRegistration.Salary,
-                            Active = 1
-                        };
-
-
-                        try
-                        {
-                            _dapper.ExecuteSql(UserToAddSql, UserToAddParameters);
                             return Ok();
                         }
-                        catch (Exception e)
-                        {
-                            throw new Exception(e.Message);
-                        }
-
-                        throw new Exception("Failed to add user");
                     }
 
                     throw new Exception("Failed to register the user");
