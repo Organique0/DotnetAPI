@@ -25,6 +25,19 @@ public class UserCompleteController : ControllerBase
         _reusableSql = new ReusableSql(configuration);
     }
 
+    [AllowAnonymous]
+    [HttpGet("TestConnection")]
+    public DateTime TestConnection()
+    {
+        return _dapper.LoadDataSingle<DateTime>("SELECT GETDATE()");
+    }
+    [AllowAnonymous]
+    [HttpGet("Test")]
+    public string Test()
+    {
+        return "hello world";
+    }
+
     //"value in {} will be displayed in API docs 
     [HttpGet("GetUsers/{userId}/{active}")]
     public IEnumerable<UserComplete> GetUsers(int userId, bool active)

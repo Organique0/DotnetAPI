@@ -53,3 +53,5 @@ bld/
 # Ignore appsettings.json files
 appsettings.Development.json
 
+deployCommands.txt
+.azure/config
