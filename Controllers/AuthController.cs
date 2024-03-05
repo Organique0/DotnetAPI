@@ -104,7 +104,7 @@ namespace DotnetAPI.Controllers
         {
             try
             {
-                string sqlForHashAndSalt = "EXEC TutorialAppSchema.sp_LoginConfirmation_Get @Email";
+                string sqlForHashAndSalt = "EXEC TutorialAppSchema.spLoginConfirmation_Get @Email";
 
                 //Use dynamic parameters instead. Just because.
                 DynamicParameters sqlParameters = new();
@@ -123,7 +123,7 @@ namespace DotnetAPI.Controllers
                     }
                 }
 
-                string userIdSql = "EXEC TutorialAppSchema.sp_UserId_Get @UserId, @Email";
+                string userIdSql = "EXEC TutorialAppSchema.spUserId_Get @UserId, @Email";
 
                 DynamicParameters UserIdSqlParameters = new();
                 UserIdSqlParameters.Add("@Email", userForLogin.Email, DbType.String);
@@ -146,7 +146,7 @@ namespace DotnetAPI.Controllers
         [HttpGet("RefreshToken")]
         public string RefreshToken()
         {
-            string userIdSql = "EXEC TutorialAppSchema.sp_UserId_Get @UserId, @Email=null";
+            string userIdSql = "EXEC TutorialAppSchema.spUserId_Get @UserId, @Email=null";
 
             var userIdSqlParameters = new
             {

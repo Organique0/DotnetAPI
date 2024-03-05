@@ -55,3 +55,4 @@ appsettings.Development.json
 
 deployCommands.txt
 .azure/config
+SQLCheatsheet.sql
